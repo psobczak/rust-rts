@@ -3,17 +3,20 @@ mod cursor;
 mod ground;
 mod order;
 mod selection;
+mod ui;
 mod unit;
 
 use bevy::{input::common_conditions::input_toggle_active, prelude::*};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_picking::DefaultPickingPlugins;
 use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
+
 use building::BuildingPlugin;
 use cursor::CursorPlugin;
 use ground::GroundPlugin;
 use order::OrderPlugin;
 use selection::SelectionPlugin;
+use ui::UiPlugin;
 use unit::UnitPlugin;
 
 fn main() {
@@ -37,6 +40,7 @@ fn main() {
             OrderPlugin,
             GroundPlugin,
             CursorPlugin,
+            UiPlugin,
         ))
         .add_systems(Startup, setup)
         .run();

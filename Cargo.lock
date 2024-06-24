@@ -3660,6 +3660,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
+ "bevy_egui",
  "bevy_mod_picking",
  "bevy_rts_camera",
  "bevy_xpbd_3d",

@@ -11,17 +11,17 @@ const ORDER_KEYS: [KeyCode; 3] = [KeyCode::KeyM, KeyCode::KeyP, KeyCode::KeyS];
 pub struct OrderPlugin;
 
 #[derive(Component, Reflect)]
-enum Order {
+pub enum Order {
     Move(Vec3),
     Attack(Entity),
     Patrol(PatrolDetails),
 }
 
 #[derive(Reflect)]
-struct PatrolDetails {
-    entity: Entity,
-    original_position: Vec3,
-    patrol_target: Vec3,
+pub struct PatrolDetails {
+    pub entity: Entity,
+    pub original_position: Vec3,
+    pub patrol_target: Vec3,
 }
 
 impl Plugin for OrderPlugin {
@@ -97,7 +97,7 @@ fn complete_order(mut commands: Commands, query: Query<(Entity, &Order, &GlobalT
     for (entity, order, transform) in &query {
         match order {
             Order::Move(target) => {
-                if transform.translation().abs_diff_eq(*target, 0.5) {
+                if transform.translation().abs_diff_eq(*target, 0.1) {
                     commands.entity(entity).remove::<Order>();
                 }
             }
@@ -105,7 +105,7 @@ fn complete_order(mut commands: Commands, query: Query<(Entity, &Order, &GlobalT
             Order::Patrol(patrol) => {
                 if transform
                     .translation()
-                    .abs_diff_eq(patrol.patrol_target, 0.5)
+                    .abs_diff_eq(patrol.patrol_target, 0.1)
                 {
                     commands.entity(entity).insert(Order::Patrol(PatrolDetails {
                         original_position: patrol.patrol_target,
