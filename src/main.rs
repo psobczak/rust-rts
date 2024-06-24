@@ -1,4 +1,6 @@
 mod building;
+mod cursor;
+mod ground;
 mod order;
 mod selection;
 mod unit;
@@ -6,8 +8,10 @@ mod unit;
 use bevy::{input::common_conditions::input_toggle_active, prelude::*};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_picking::DefaultPickingPlugins;
-use bevy_rts_camera::{Ground, RtsCamera, RtsCameraControls, RtsCameraPlugin};
+use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
 use building::BuildingPlugin;
+use cursor::CursorPlugin;
+use ground::GroundPlugin;
 use order::OrderPlugin;
 use selection::SelectionPlugin;
 use unit::UnitPlugin;
@@ -27,16 +31,18 @@ fn main() {
             SelectionPlugin,
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Slash)),
         ))
-        .add_plugins((BuildingPlugin, UnitPlugin, OrderPlugin))
+        .add_plugins((
+            BuildingPlugin,
+            UnitPlugin,
+            OrderPlugin,
+            GroundPlugin,
+            CursorPlugin,
+        ))
         .add_systems(Startup, setup)
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
+fn setup(mut commands: Commands) {
     commands.spawn((
         Camera3dBundle {
             transform: Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
@@ -54,13 +60,4 @@ fn setup(
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
         ..default()
     });
-
-    commands.spawn((
-        Ground,
-        PbrBundle {
-            mesh: meshes.add(Plane3d::default().mesh().size(50.0, 50.0)),
-            material: materials.add(Color::WHITE),
-            ..default()
-        },
-    ));
 }

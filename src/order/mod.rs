@@ -1,9 +1,10 @@
-mod move_order;
-
 use bevy::prelude::*;
-use move_order::Move;
 
-use crate::{selection::Selected, unit::Unit};
+use crate::{
+    cursor::MousePosition,
+    selection::Selected,
+    unit::{Unit, UNIT_SIZE},
+};
 
 const ORDER_KEYS: [KeyCode; 3] = [KeyCode::KeyM, KeyCode::KeyP, KeyCode::KeyS];
 
@@ -25,31 +26,33 @@ struct PatrolDetails {
 
 impl Plugin for OrderPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<Order>()
-            .register_type::<Move>()
-            .add_systems(
-                Update,
-                (
-                    add_move_order,
-                    add_patrol_order,
-                    execute_order,
-                    complete_order,
-                ),
-            );
+        app.register_type::<Order>().add_systems(
+            Update,
+            (
+                add_move_order,
+                add_patrol_order,
+                execute_order,
+                complete_order,
+            ),
+        );
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn add_patrol_order(
     mut commands: Commands,
     selected_units: Query<(Entity, &GlobalTransform), (With<Unit>, With<Selected>)>,
     mouse: Res<ButtonInput<MouseButton>>,
     keyboard: Res<ButtonInput<KeyCode>>,
+    mouse_position: Res<MousePosition>,
 ) {
     if mouse.just_pressed(MouseButton::Right) && keyboard.pressed(KeyCode::KeyP) {
         for (unit, transform) in &selected_units {
+            let mut patrol_target = mouse_position.world;
+            patrol_target.y = UNIT_SIZE / 2.0;
             commands.entity(unit).insert(Order::Patrol(PatrolDetails {
                 original_position: transform.translation(),
-                patrol_target: Vec3::new(-4.0, 0.15, -3.0),
+                patrol_target,
                 entity: unit,
             }));
         }
@@ -61,12 +64,13 @@ pub fn add_move_order(
     selected_units: Query<Entity, (With<Unit>, With<Selected>)>,
     mouse: Res<ButtonInput<MouseButton>>,
     keyboard: Res<ButtonInput<KeyCode>>,
+    mouse_position: Res<MousePosition>,
 ) {
     if mouse.just_pressed(MouseButton::Right) && !keyboard.any_pressed(ORDER_KEYS) {
+        let mut target = mouse_position.world;
+        target.y = UNIT_SIZE / 2.0;
         for unit in &selected_units {
-            commands
-                .entity(unit)
-                .insert(Order::Move(Vec3::new(-1.0, 0.15, -3.0)));
+            commands.entity(unit).insert(Order::Move(target));
         }
     }
 }

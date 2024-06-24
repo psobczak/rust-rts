@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_mod_picking::PickableBundle;
 
-const UNIT_SIZE: f32 = 0.5;
+pub const UNIT_SIZE: f32 = 0.5;
 
 pub struct UnitPlugin;
 
