@@ -5,7 +5,9 @@ use bevy_mod_picking::{
 };
 
 use crate::{
-    order::Order, selection::Selected, unit::{Unit, Worker}
+    order::Order,
+    selection::Selected,
+    unit::{Unit, Worker},
 };
 
 const GOLD_MINE_SIZE: f32 = 1.0;
@@ -32,7 +34,6 @@ struct GoldMine {
 
 #[derive(Component, Debug, Reflect)]
 pub struct WorkingInMine;
-
 
 fn spawn_gold_mine(
     mut commands: Commands,
@@ -81,10 +82,13 @@ fn assign_worker(
         for (mine_entity, mut gold_mine, transform) in &mut gold_mines {
             for event in reader.read() {
                 if event.target == mine_entity
+                    && !gold_mine.workers.contains(&worker)
                     && gold_mine.workers.len() < gold_mine.max_workers as usize
                 {
                     gold_mine.workers.push(worker);
-                    commands.entity(worker).insert(Order::Move(transform.translation()));
+                    commands
+                        .entity(worker)
+                        .insert(Order::Work(transform.translation()));
                 }
             }
         }

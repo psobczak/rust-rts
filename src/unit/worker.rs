@@ -1,25 +1,11 @@
 use bevy::prelude::*;
 use bevy_mod_picking::PickableBundle;
 
-use crate::order::OrdersQueue;
+use crate::{building::WorkingInMine, order::OrdersQueue};
 
-pub const UNIT_SIZE: f32 = 0.5;
+use super::{Unit, Worker, UNIT_SIZE};
 
-pub struct UnitPlugin;
-
-impl Plugin for UnitPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_workers);
-    }
-}
-
-#[derive(Component)]
-pub struct Unit;
-
-#[derive(Component)]
-pub struct Worker;
-
-fn spawn_workers(
+pub fn spawn_workers(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -38,5 +24,12 @@ fn spawn_workers(
                 ..Default::default()
             },
         ));
+    }
+}
+
+pub fn hide_workers_in_gold_mine(mut workers: Query<&mut Visibility, Added<WorkingInMine>>) {
+    for mut visibility in workers.iter_mut() {
+        info!("Should hide");
+        *visibility = Visibility::Hidden;
     }
 }
