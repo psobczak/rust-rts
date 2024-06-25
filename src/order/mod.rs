@@ -1,23 +1,27 @@
+use std::collections::VecDeque;
+
 use bevy::prelude::*;
 
 use crate::{
-    cursor::MousePosition,
-    selection::Selected,
-    unit::{Unit, UNIT_SIZE},
+    building::WorkingInMine, cursor::MousePosition, selection::Selected, unit::{Unit, UNIT_SIZE}
 };
 
 const ORDER_KEYS: [KeyCode; 3] = [KeyCode::KeyM, KeyCode::KeyP, KeyCode::KeyS];
 
 pub struct OrderPlugin;
 
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Debug)]
 pub enum Order {
     Move(Vec3),
     Attack(Entity),
     Patrol(PatrolDetails),
+    Work(Vec3)
 }
 
-#[derive(Reflect)]
+#[derive(Component, Debug, Reflect, Default)]
+pub struct OrdersQueue(VecDeque<Order>);
+
+#[derive(Reflect, Debug)]
 pub struct PatrolDetails {
     pub entity: Entity,
     pub original_position: Vec3,
@@ -26,15 +30,17 @@ pub struct PatrolDetails {
 
 impl Plugin for OrderPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<Order>().add_systems(
-            Update,
-            (
-                add_move_order,
-                add_patrol_order,
-                execute_order,
-                complete_order,
-            ),
-        );
+        app.register_type::<Order>()
+            .register_type::<OrdersQueue>()
+            .add_systems(
+                Update,
+                (
+                    add_move_order,
+                    add_patrol_order,
+                    execute_order,
+                    complete_order,
+                ),
+            );
     }
 }
 
@@ -78,17 +84,17 @@ pub fn add_move_order(
 fn execute_order(mut query: Query<(&mut Transform, &Order)>, time: Res<Time>) {
     for (mut transform, order) in &mut query {
         match order {
-            Order::Move(target) => {
+            Order::Move(target) | Order::Work(target)=> {
                 transform.look_at(*target, Vec3::Y);
                 let direction = transform.forward();
                 transform.translation += direction * time.delta_seconds();
             }
-            Order::Attack(_) => todo!(),
             Order::Patrol(patrol_details) => {
                 transform.look_at(patrol_details.patrol_target, Vec3::Y);
                 let direction = transform.forward();
                 transform.translation += direction * time.delta_seconds();
-            }
+            },
+            _ => {}
         }
     }
 }
@@ -100,8 +106,13 @@ fn complete_order(mut commands: Commands, query: Query<(Entity, &Order, &GlobalT
                 if transform.translation().abs_diff_eq(*target, 0.1) {
                     commands.entity(entity).remove::<Order>();
                 }
+            },
+            Order::Work(target) => {
+                if transform.translation().abs_diff_eq(*target, 0.1) {
+                    commands.entity(entity).remove::<Order>();
+                    commands.entity(entity).insert(WorkingInMine);
+                }
             }
-            Order::Attack(_) => todo!(),
             Order::Patrol(patrol) => {
                 if transform
                     .translation()
@@ -113,7 +124,8 @@ fn complete_order(mut commands: Commands, query: Query<(Entity, &Order, &GlobalT
                         entity,
                     }));
                 }
-            }
+            },
+            _ => {}
         }
     }
 }

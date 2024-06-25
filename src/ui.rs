@@ -10,7 +10,7 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, ui_example_system);
+        app.add_systems(Update, (ui_example_system, draw_patrol_path));
     }
 }
 
@@ -37,9 +37,28 @@ fn ui_example_system(
                                 patrol.original_position, patrol.patrol_target
                             ));
                         }
+                        Order::Work(target) => {
+                            ui.label(format!("Going to work at {:?}", target));
+                        },
                     }
                 };
                 ui.separator();
             }
         });
+}
+
+fn draw_patrol_path(mut gizmos: Gizmos, units: Query<(&Order, &GlobalTransform)>) {
+    for (order, transform) in &units {
+        match order {
+            Order::Move(target) => {
+                gizmos.arrow(transform.translation(), *target, Color::WHITE);
+            }
+            Order::Patrol(patrol_details) => gizmos.line(
+                patrol_details.original_position,
+                patrol_details.patrol_target,
+                Color::WHITE,
+            ),
+            _ => {}
+        }
+    }
 }
