@@ -17,6 +17,7 @@ pub struct BuildingPlugin;
 impl Plugin for BuildingPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<GoldMine>()
+            .register_type::<BuildingCapacity>()
             .add_systems(Startup, spawn_gold_mine)
             .add_systems(Update, (print_gold_count, assign_worker));
     }
@@ -27,9 +28,13 @@ struct Building;
 
 #[derive(Component, Debug, Reflect)]
 struct GoldMine {
-    pub max_workers: u32,
-    pub workers: Vec<Entity>,
     pub gold_left: u32,
+}
+
+#[derive(Component, Debug, Reflect)]
+pub struct BuildingCapacity {
+    pub max: u32,
+    pub units: Vec<Entity>,
 }
 
 #[derive(Component, Debug, Reflect)]
@@ -41,13 +46,13 @@ fn spawn_gold_mine(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     commands.spawn((
+        BuildingCapacity {
+            max: 5,
+            units: vec![],
+        },
         Name::from("Gold Mine"),
         Building,
-        GoldMine {
-            max_workers: 5,
-            workers: vec![],
-            gold_left: 10_000,
-        },
+        GoldMine { gold_left: 10_000 },
         PickableBundle::default(),
         PbrBundle {
             material: materials.add(Color::GOLD),
@@ -75,17 +80,17 @@ fn print_gold_count(
 fn assign_worker(
     mut commands: Commands,
     mut reader: EventReader<Pointer<Click>>,
-    mut gold_mines: Query<(Entity, &mut GoldMine, &GlobalTransform)>,
+    mut gold_mines: Query<(Entity, &mut BuildingCapacity, &GlobalTransform), With<GoldMine>>,
     selected_workers: Query<Entity, (With<Unit>, With<Selected>, With<Worker>)>,
 ) {
     for worker in &selected_workers {
-        for (mine_entity, mut gold_mine, transform) in &mut gold_mines {
+        for (mine_entity, mut capacity, transform) in &mut gold_mines {
             for event in reader.read() {
                 if event.target == mine_entity
-                    && !gold_mine.workers.contains(&worker)
-                    && gold_mine.workers.len() < gold_mine.max_workers as usize
+                    && !capacity.units.contains(&worker)
+                    && capacity.units.len() < capacity.max as usize
                 {
-                    gold_mine.workers.push(worker);
+                    capacity.units.push(worker);
                     commands
                         .entity(worker)
                         .insert(Order::Work(transform.translation()));

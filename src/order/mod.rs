@@ -3,7 +3,10 @@ use std::collections::VecDeque;
 use bevy::prelude::*;
 
 use crate::{
-    building::WorkingInMine, cursor::MousePosition, selection::Selected, unit::{Unit, UNIT_SIZE}
+    building::WorkingInMine,
+    cursor::MousePosition,
+    selection::Selected,
+    unit::{Unit, UNIT_SIZE},
 };
 
 const ORDER_KEYS: [KeyCode; 3] = [KeyCode::KeyM, KeyCode::KeyP, KeyCode::KeyS];
@@ -15,7 +18,7 @@ pub enum Order {
     Move(Vec3),
     Attack(Entity),
     Patrol(PatrolDetails),
-    Work(Vec3)
+    Work(Vec3),
 }
 
 #[derive(Component, Debug, Reflect, Default)]
@@ -73,10 +76,10 @@ pub fn add_move_order(
     mouse_position: Res<MousePosition>,
 ) {
     if mouse.just_pressed(MouseButton::Right) && !keyboard.any_pressed(ORDER_KEYS) {
-        let mut target = mouse_position.world;
-        target.y = UNIT_SIZE / 2.0;
         for unit in &selected_units {
-            commands.entity(unit).insert(Order::Move(target));
+            commands
+                .entity(unit)
+                .insert(Order::Move(mouse_position.world));
         }
     }
 }
@@ -84,16 +87,18 @@ pub fn add_move_order(
 fn execute_order(mut query: Query<(&mut Transform, &Order)>, time: Res<Time>) {
     for (mut transform, order) in &mut query {
         match order {
-            Order::Move(target) | Order::Work(target)=> {
+            Order::Move(target) | Order::Work(target) => {
                 transform.look_at(*target, Vec3::Y);
                 let direction = transform.forward();
+                let direction = Vec3::new(direction.x, UNIT_SIZE / 2.0, direction.z);
+                info!("Direction: {:?}", direction);
                 transform.translation += direction * time.delta_seconds();
             }
             Order::Patrol(patrol_details) => {
                 transform.look_at(patrol_details.patrol_target, Vec3::Y);
                 let direction = transform.forward();
                 transform.translation += direction * time.delta_seconds();
-            },
+            }
             _ => {}
         }
     }
@@ -106,7 +111,7 @@ fn complete_order(mut commands: Commands, query: Query<(Entity, &Order, &GlobalT
                 if transform.translation().abs_diff_eq(*target, 0.1) {
                     commands.entity(entity).remove::<Order>();
                 }
-            },
+            }
             Order::Work(target) => {
                 if transform.translation().abs_diff_eq(*target, 0.1) {
                     commands.entity(entity).remove::<Order>();
@@ -124,7 +129,7 @@ fn complete_order(mut commands: Commands, query: Query<(Entity, &Order, &GlobalT
                         entity,
                     }));
                 }
-            },
+            }
             _ => {}
         }
     }

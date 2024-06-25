@@ -11,6 +11,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_picking::DefaultPickingPlugins;
 use bevy_rts_camera::{RtsCamera, RtsCameraControls, RtsCameraPlugin};
 
+use bevy_xpbd_3d::plugins::{PhysicsDebugPlugin, PhysicsPlugins};
 use building::BuildingPlugin;
 use cursor::CursorPlugin;
 use ground::GroundPlugin;
@@ -29,6 +30,8 @@ fn main() {
             ..default()
         }))
         .add_plugins((
+            PhysicsPlugins::default(),
+            PhysicsDebugPlugin::default(),
             DefaultPickingPlugins,
             RtsCameraPlugin,
             SelectionPlugin,

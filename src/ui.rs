@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_egui::{
     egui::{self, Align2},
     EguiContexts,
@@ -10,7 +10,10 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (ui_example_system, draw_patrol_path));
+        app.add_systems(
+            Update,
+            (ui_example_system, draw_patrol_path, draw_bottom_panel),
+        );
     }
 }
 
@@ -39,11 +42,23 @@ fn ui_example_system(
                         }
                         Order::Work(target) => {
                             ui.label(format!("Going to work at {:?}", target));
-                        },
+                        }
                     }
                 };
                 ui.separator();
             }
+        });
+}
+
+fn draw_bottom_panel(mut contexts: EguiContexts, window: Query<&Window, With<PrimaryWindow>>) {
+    let window = window.single();
+    egui::Window::new("Bottom Panel")
+        // .anchor(Align2::CENTER_BOTTOM, egui::Vec2::ZERO)
+        .collapsible(false)
+        // .default_width(window.width())
+        .fixed_size(egui::Vec2::new(100.0, 100.0))
+        .show(contexts.ctx_mut(), |ui| {
+            ui.label("Bottom Panel");
         });
 }
 
